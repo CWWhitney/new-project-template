@@ -1,0 +1,168 @@
+---
+title: "Decision-Analytic Template (decisionSupport + R workflow)"
+author: "Your Name"
+output:
+  html_document:
+    selfcontained: true
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(
+  echo = TRUE,
+  out.width = "75%",
+  fig.align = "center",
+  warning = FALSE,
+  message = FALSE
+)
+
+library(decisionSupport)
+library(tidyverse)
+```
+
+Purpose and workflow
+
+This repository is a template for collaborating on decision models in R using {decisionSupport}.
+
+Workflow rule: the whole project should run by knitting index.Rmd.
+
+Folder conventions:
+
+data/ contains the uncertainty input table (inputs_decision.csv) and any raw data
+
+scripts/ contains the model function and small helpers (local files)
+
+figures/ stores exported figures (optional)
+
+Local scripts used here:
+
+- scripts/make_variables.R
+- scripts/Decision_Model.R
+
+Optional overview figure (safe to remove if you don’t have it):
+
+1) Model testing (construction helper)
+
+This chunk builds the variables from the input table so you can test pieces of the model interactively.
+
+```{r}
+source("scripts/make_variables.R")
+make_variables(decisionSupport::estimate_read_csv("data/inputs_decision.csv"))
+```
+
+2) Optional: check that input variables appear in the model script
+
+This catches a common issue: the CSV contains variables that never get used in the model.
+
+```{r}
+data <- read.csv("data/inputs_decision.csv")
+var_list <- unique(data$variable)
+```
+
+```{r}
+r_script_lines <- readLines("scripts/Decision_Model.R")
+r_script_text <- paste(r_script_lines, collapse = " ")
+
+missing_in_script <- var_list[!sapply(var_list, function(v) grepl(v, r_script_text, fixed = TRUE))]
+missing_in_script
+```
+
+3) Monte Carlo simulation
+Run the generic decision model under uncertainty with decisionSupport::mcSimulation().
+
+```{r}
+source("scripts/Decision_Model.R")
+
+set.seed(42)
+
+decision_simulation_results <- mcSimulation(
+  estimate = estimate_read_csv("data/inputs_decision.csv"),
+  model_function = decision_function,
+  numberOfModelRuns = 1e4,
+  functionSyntax = "plainNames"
+)
+```
+
+```{r}
+names(decision_simulation_results$y)
+```
+
+4) Core result: NPV distribution
+The main output is the Net Present Value (NPV) of the decision.
+
+```{r}
+summary(decision_simulation_results$y$NPV_decision)
+```
+
+```{r}
+quantile(decision_simulation_results$y$NPV_decision, probs = c(0.05, 0.5, 0.95))
+```
+
+NPV density plot
+
+```{r}
+df_npv <- tibble(NPV = decision_simulation_results$y$NPV_decision)
+
+
+ggplot(df_npv, aes(x = NPV)) +
+  geom_density() +
+  labs(x = "NPV", y = "Density", title = "Distribution of NPV outcomes") +
+  theme_minimal(base_size = 12)
+```
+
+NPV boxplot
+
+```{r}
+ggplot(df_npv, aes(y = NPV)) +
+  geom_boxplot() +
+  labs(y = "NPV", title = "NPV outcomes (boxplot)") +
+  theme_minimal(base_size = 12)
+```
+
+5) Cashflows over time
+
+The model returns a vector Cashflow across years. In decisionSupport, vectors are expanded into columns like Cashflow1, Cashflow2, ...
+
+```{r}
+cashflow_cols <- grep("^Cashflow\\d+$", names(decision_simulation_results$y), value = TRUE)
+
+cashflow_means <- tibble(
+  year = seq_along(cashflow_cols),
+  mean_cashflow = colMeans(decision_simulation_results$y[, cashflow_cols, drop = FALSE])
+)
+
+
+cashflow_means
+```
+
+```{r}
+ggplot(cashflow_means, aes(x = year, y = mean_cashflow)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Year", y = "Mean cashflow", title = "Mean cashflow over time") +
+  theme_minimal(base_size = 12)
+```
+  
+6) Input QA (quick summary)
+
+This is a quick check of the sampled inputs used in the simulation.
+
+```{r}
+summary(decision_simulation_results$x)
+```
+
+Notes for collaborators
+
+Start simple: get the project structure correct and make sure index.Rmd knits cleanly.
+
+Keep all key steps visible in index.Rmd:
+
+- read inputs
+
+- run simulation
+
+- summarize results
+
+- generate figures
+
+Add complexity only after the baseline model is reproducible
