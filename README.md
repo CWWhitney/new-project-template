@@ -1,32 +1,63 @@
-# Urban School Gardens 
+# Decision Modeling Template (R + decisionSupport)
 
-Nutrition Intervention Forecasting and Monitoring (NIFAM) intervention by NIFAM partner (CODAS) funded by BLE (German Federal Office for Agriculture and Food)
+This repository provides a **simple, reproducible template** for running a decision model in R using the **{decisionSupport}** package.
 
+Conceptual overview and workflow philosophy:  
+https://gist.github.com/CWWhitney/209bc9ee3a5bec7317863feaa6f4a66f
+
+Rendered example output:  
 https://htmlpreview.github.io/?https://github.com/CWWhitney/urban_school_gardens/blob/main/Index.html
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14767816.svg)](https://doi.org/10.5281/zenodo.14767816)
 
-Decision model for a school garden nutrition intervention in urban Hanoi. There are three simulated options: 
-1. A school garden on existing school property, as an informal addition to the school and only passively used for education, without any formal educational integration
-2. the same garden as a formal part of the STEM education program, actively used for education, with incurred training and other costs but also offsetting education and extracurricular costs,
-3. maintain the existing uses of the space that would otherwise be used for the garden, play space etc. 
+---
 
-Working backward in complexity these three models describe the impact of the school garden intervention: 
+## What’s in this repository
 
-a. as a decision for school boards, 
+A minimal decision model with:
 
-**General school garden model illustration.**
-![CODAS_Garden_Impact pathway](https://github.com/CWWhitney/nifam_codas_school_garden/assets/19190662/65e3af17-bc53-4b58-8e00-3115925d928f)
-This is the basis for the model in this repository. See paper for the full description
+- **One cost** (up-front)
+- **One benefit** (annual stream)
+- **One risk** (probabilistic reduction in benefits)
+- **One outcome**: Net Present Value (NPV)
 
-b. for food environment outcomes
- 
-**School garden and food environment overview**
-![outline_food_env_garden](https://github.com/CWWhitney/nifam_codas_school_garden/assets/19190662/782db5d2-b48f-453b-a99f-e026da7c20ba)
-Conceptual overview of the school garden food environment and its role in shaping interventions aimed at improving child health. The diagram illustrates key components, including underlying factors (e.g., income status and health knowledge), intervention effects (e.g., quality, safety and perception of garden products) and intervention outcomes (e.g., acquiring, consuming and ultimately health impacts). Relationships between components highlight how school gardens influence children's willingness and ability to access nutritious foods, their desirability for healthier options and the overall effect on nutrition and health outcomes
+The goal is not complexity — it is **clear structure and reproducibility**.
 
-and c. interventions to the food environment.
+## Project structure
 
-**Food environments overview**
-![outline_food_env_general](https://github.com/CWWhitney/nifam_codas_school_garden/assets/19190662/6275853f-beb2-4cf6-9772-24137fd27b6d)
-Food environment characteristics and the influence on food choices. Intervention effects (blue), affordability (ability / willingness to pay), desirability (actual / perceived need for food), accessibility (actual / perceived access), all leading to the ultimate intervention outcome (orange) of nutrition and health: the implication for acquiring, preparing and consuming food given all underlying and external factors (dotted black circles)
+```
+project/
+│
+├── index.Rmd # Run the full analysis here
+├── README.md
+│
+├── data/
+│ └── inputs_decision.csv # Uncertain input parameters
+│
+├── scripts/
+│ ├── Decision_Model.R # Decision model function
+│ └── make_variables.R # Helper for testing variables
+│
+└── figures/ # Output plots (optional)
+```
+
+## How to use
+
+1. Put uncertain inputs in `data/inputs_decision.csv`
+2. Define model logic in `scripts/Decision_Model.R`
+3. Run the simulation from **`index.Rmd`**
+4. Knit `index.Rmd` to reproduce all results and figures
+
+---
+
+## Working style
+
+- Keep everything reproducible from `index.Rmd`
+- Keep the folder structure intact
+- Start simple before adding model complexity
+
+---
+
+## Citation
+
+If you use or adapt this template, please cite the Zenodo record above.
